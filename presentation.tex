@@ -61,14 +61,15 @@
 \begin{frame}[fragile]
   \frametitle{Введение}
   \begin{itemize}
-    \item Бинарные трансляторы являются популярными инструментами для анализа кода, профиляции и эмуляции, важным классом которых являются динамические бинарные трансляторы (далее --- ДБТ)
+    \item Бинарные трансляторы являются инструментами для анализа кода, профиляции и эмуляции
+    \item Важным классом которых являются динамические бинарные трансляторы (далее --- ДБТ)
     \item В качестве промежуточного представления для ДБТ хорошо использовать LLVM IR
           \begin{itemize}
             \item Тулчейн LLVM позволяет проводить качественные оптимизации
           \end{itemize}
     \item Хотим ДБТ для RISC-V
           % \item Instrew является ДБТ с поднятием двочиного кода в LLVM IR, но нет поддержки RISC-V, как хост архитектуры
-    \item В результате работы хотим добавить поддержку архитектуры RISC-V для ДБТ с открытым исходным кодом
+          % \item В результате работы хотим добавить поддержку архитектуры RISC-V для ДБТ с открытым исходным кодом
   \end{itemize}
 \end{frame}
 
@@ -93,17 +94,16 @@
           \end{itemize}
     \item Динамические бинарные трансляторы с поднятием в LLVM IR:
           \begin{itemize}
-            \item Remill + McSema, rev.ng, llvm-mctoll\footnote{\href{https://se.math.spbu.ru/thesis/texts/Frolov\_Timofej\_Sergeevich\_Spring\_practice\_2nd\_year\_2024\_text.pdf}{https://se.math.spbu.ru/thesis/texts/Frolov\_Timofej\_Sergeevich\_Spring\_practice\_2nd\_year\_2024\_text.pdf}}
+            \item McSema + Remill\footnote{\href{https://se.math.spbu.ru/thesis/texts/Frolov\_Timofej\_Sergeevich\_Spring\_practice\_2nd\_year\_2024\_text.pdf}{https://se.math.spbu.ru/thesis/texts/Frolov\_Timofej\_Sergeevich\_Spring\_practice\_2nd\_year\_2024\_text.pdf}}
             \item Instrew + Rellume
-                  % \item DBILL
+            \item DBILL, HQEMU
           \end{itemize}
     \item Выводы:
           \begin{itemize}
-            \item Instrew работает быстрее, чем QEMU и Valgrind, а так же имеет API для добавления инструментов динамического бинарного анализа\footnote{\href{https://mediatum.ub.tum.de/doc/1614897/1614897.pdf}{https://mediatum.ub.tum.de/doc/1614897/1614897.pdf}}
+            \item Instrew работает быстрее, чем QEMU и Valgrind, а так же имеет API для добавления инструментов бинарного анализа\footnote{\href{https://mediatum.ub.tum.de/doc/1614897/1614897.pdf}{https://mediatum.ub.tum.de/doc/1614897/1614897.pdf}}
+            \item Из всех рассмотренных ДБТ с поднятием в LLVM IR Instrew + Rellume поддерживается контрибъютором и уже имеет guest-поддержку RISC-V
           \end{itemize}
   \end{itemize}
-
-
 \end{frame}
 
 % \begin{frame}
@@ -141,7 +141,7 @@
 
 \begin{frame}
   \frametitle{Постановка задачи}
-  \textbf{Цель:} Добавить поддержку архитектуры RISC-V для ДБТ Instrew.
+  \textbf{Цель:} Добавить поддержку host-архитектуры RISC-V для ДБТ Instrew
 
   \vspace{5mm}
   \textbf{Задачи:}
@@ -152,10 +152,13 @@
     \item Реализовать минимальную функциональность для запуска Instrew
           на RISC-V:
           \begin{itemize}
-            \item Добавить процессорно-специфические патчи в minilibc и другие компоненты
+            % \item Добавить процессорно-специфические патчи в minilibc и другие компоненты
+            % \item Реализовать функции, связанные с RISC-V ABI
+            \item Скомпилировать, добавив процессорно-специфические патчи и проставив константы
             \item Реализовать функции, связанные с RISC-V ABI
           \end{itemize}
-    \item Протестировать на простых примерах
+          % \item Протестировать на простых примерах
+    \item Протестировать на простых программах
           % (например на SPEC CPU 2017)
   \end{enumerate}
 \end{frame}
@@ -235,9 +238,16 @@
   %   \item В реализации интересны архитектура, библиотеки, инструменты
   %   \item Не надо добавлять на слайд примеры кода
   % \end{itemize}
-  \begin{center}
-    \includegraphics[width=300pt]{pictures/instrew.drawio.png}
-  \end{center}
+  \begin{figure}
+    % \includegraphics[width=300pt]{pictures/instrew.drawio.png}
+    \centering
+    \includegraphics[width=250pt]{pictures/instrew-arch-disser.png}\footnote{\href{https://mediatum.ub.tum.de/doc/1614897/1614897.pdf}{https://mediatum.ub.tum.de/doc/1614897/1614897.pdf}}
+    % \caption{}
+  \end{figure}
+  % \vspace{-8pt}
+  \begin{itemize}
+    \item В данной практике была проведена работа над клиентом Instrew
+  \end{itemize}
 \end{frame}
 
 \begin{frame}[fragile]
@@ -246,33 +256,37 @@
     \item Чтобы скомпилировать, необходимо:
           \begin{itemize}
             \item Проставить константы
-            \item Сделать простой header на ассемблере, для входа в программу, после execve
+            \item Сделать простой header на ассемблере для входа в программу, после execve
           \end{itemize}
-    \item Из-за недостатка опыта с архитектурой RISC-V, необходимо было прочитать документацию\footnote{https://riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf}\footnote{https://github.com/riscv-non-isa/riscv-elf-psabi-doc/blob/master/riscv-elf.adoc}
+          % \item Из-за недостатка опыта с архитектурой RISC-V, необходимо было прочитать документацию\footnote{https://riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf}\footnote{https://github.com/riscv-non-isa/riscv-elf-psabi-doc/blob/master/riscv-elf.adoc}
+    \item Оказалось, что не все псевдоинструкции описаны в документации RISC-V\footnote{https://reviews.llvm.org/D49661}
   \end{itemize}
 \end{frame}
 
 \begin{frame}[fragile]
-  \frametitle{Особенности Instrew (грабли)}
+  \frametitle{Особенности Instrew}
   \begin{itemize}
     \item Флаги сборки клиента Instrew:
           \begin{itemize}
             % \item -fPIC, -static-pie, -nostdlib, -no-startfiles и т.д.
-            \item В рантайме к instrew-client подключался ld-linux
-            \item Но такого быть не должно, так как instrew-client сам является линкером
-            \item Оказалось, что -static-pie флаг gcc не подразумевал собой -no-dynamic-linker флаг
+            % \item В рантайме к instrew-client подключался ld-linux
+            % \item Но такого быть не должно, так как instrew-client сам является линкером
+            % \item Оказалось, что -static-pie флаг gcc не подразумевал собой -no-dynamic-linker флаг
+            \item Клиент во время запуска выдаёт ошибку сегментации
+            \item Утилита pmap показывает, что к клиенту динамически линкуется ld-linux и выполнить релокации невозможно
+            \item Оказалось, что --static-pie флаг у gcc-13 на x86\_64 и RISC-V отличается семантикой
           \end{itemize}
     \item Динамические релокации:
           \begin{itemize}
             \item Так как instrew-client собирается и линкуется без libc, ему нужно самому обработать свои релокации
             \item Клиент загадочно падет на какой-то релокации
-            \item Оказалось, что над объявлением функции memset стоит аттрибут weak и из-за этого нужно реализовывать другую релокацию
+            \item Оказалось, что над объявлением функции memset стоит атрибут weak и из-за этого нужно реализовывать другую релокацию
           \end{itemize}
     \item Некоторый вывод:
           \begin{itemize}
-            \item Из-за специфических флагов сборки и линковки, сложно диагностировать segfault
-            \item Asan и gprof здесь не работают, Valgrind сложен в использовании
-            \item Остается только printf и gdb
+            \item Из-за специфических флагов сборки и линковки сложно диагностировать ошибки сегментации
+            \item Asan и gprof здесь не работают, Valgrind не помог
+            \item Остается только printf, gdb
           \end{itemize}
   \end{itemize}
 \end{frame}
@@ -283,23 +297,28 @@
     \item После успешного запуска клиента Instrew нужно:
           \begin{itemize}
             \item Реализовать эмуляцию системных вызовов для RISC-V
+            \item Проставить джампы в PLT таблице
             \item Реализовать некоторые релокации для запуска просто примера
           \end{itemize}
     \item Оказалось, что:
           \begin{itemize}
             \item Сервер запускает клиент Instrew через fork и fexecve
-            \item Возникли сложности с диагностированием с помощью gdb:
                   \begin{itemize}
+                    \item Возникли сложности с диагностированием с помощью gdb
                     \item follow-exec-mode не работал
-                    \item отдельно запуская клиент в гдб, не подгружались символы
+                    \item Отдельно запуская клиент в gdb, не подгружались символы
+                    \item Через некоторое время был найден флаг Instrew, который запускал клиент через execve
                   \end{itemize}
-            \item Через некоторое время был найден флаг, который запускал клиент через execve
-            \item Некоторые функции в Instrew для диагностирования работают исправно, но не помогают для локализации ошибок
+                  % \item Некоторые функции в Instrew для диагностирования работают исправно, но не помогают для локализации ошибок
+            \item Диагностировать ошибки непросто:
+                  \begin{itemize}
+                    \item При неправильной подстановке опкода/адреса, нужно диагностировать память с помощью gdb
+                    \item Без RISC-V декодера не обойтись
+                  \end{itemize}
           \end{itemize}
     \item Небольшой итог:
           \begin{itemize}
-            \item Удалось найти правильную комбинацию флагов, для диагностирования клиента с помощью gdb
-            \item Запустить простой пример не удалось из-за неправильного разрешения символов
+            \item Реализовывать эмуляцию системных вызовов и функции RISC-V ABI трудоёмко
           \end{itemize}
   \end{itemize}
 \end{frame}
@@ -326,6 +345,27 @@
 %   \includegraphics[width=10cm]{pictures/dist.png}
 % \end{frame}
 
+\begin{frame}[t]
+  \frametitle{Тестирование}
+  \begin{itemize}
+    \item Удалось успешно протестировать:
+          \begin{itemize}
+            \item Программах без libc, исполняющих системные вызовы
+            \item Факториале и фибоначчи, выводящих результат в exit code
+            \item Факториале с минимальным рантаймом, который выводит результат на экран
+          \end{itemize}
+    \item Не удалось протестировать на:
+          \begin{itemize}
+            \item Динамечески слинкованных программах и программах использующих libc
+            \item Программах, с флагами сборки -pie
+            \item Программах, где не конкретная релокация еще не реализована
+          \end{itemize}
+    \item Вывод:
+          \begin{itemize}
+            \item Работают статически слинкованные программы, с простым рантаймом и системными вызовами
+          \end{itemize}
+  \end{itemize}
+\end{frame}
 
 \begin{frame}
   \frametitle{Заключение}
@@ -333,10 +373,10 @@
   В результате работы были выполнены следующие задачи:
   \vspace{8pt}
   \begin{enumerate}
-    \item Выполнен обзор архитектуры Instrew и других ДБТ
-    \item Реализованы некоторые процессорно-специфические патчи
-    \item Реализована эмуляция системных вызовов
-    \item Реализованы архитектурно-специфичные ELF релокации
+    \item Выполнен обзор архитектуры Instrew
+    \item Реализованы процессорно-специфические патчи
+    \item Реализована эмуляция системных вызовов, PLT таблица и минимальный набор ELF релокаций
+    \item Instrew был протестирован на статически слинкованных программах, с простым рантаймом
   \end{enumerate}
   \vspace{8pt}
   % Протестировать Instrew на простых примерах не удалось, из-за сложности локализации ошибки в реализации релокаций
