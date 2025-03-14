@@ -54,5 +54,6 @@
         "-c",
         "%DIR%/",
         "%TMPFILE%"
-    ]
+    ],
+    "latex-workshop.formatting.latex": "latexindent"
 }
