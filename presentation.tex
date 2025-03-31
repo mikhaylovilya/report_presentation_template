@@ -66,11 +66,15 @@
 	\begin{itemize}
 		\item Бинарные трансляторы являются инструментами для анализа кода, профиляции и эмуляции
 		\item Важным классом которых являются динамические бинарные трансляторы (далее --- ДБТ)
+		      \begin{itemize}
+			      \item Используются для эмуляции "на лету"
+			      \item Например Rosetta 2
+		      \end{itemize}
 		\item В качестве промежуточного представления для ДБТ хорошо использовать LLVM IR
 		      \begin{itemize}
 			      \item Тулчейн LLVM позволяет проводить качественные оптимизации
 		      \end{itemize}
-		\item Хотим ДБТ для RISC-V
+		\item Хотим ДБТ с поднятием LLVM IR для RISC-V
 		      % \item Instrew является ДБТ с поднятием двочиного кода в LLVM IR, но нет поддержки RISC-V, как хост архитектуры
 		      % \item В результате работы хотим добавить поддержку архитектуры RISC-V для ДБТ с открытым исходным кодом
 	\end{itemize}
@@ -92,14 +96,21 @@
 		      \begin{itemize}
 			      \item QEMU-user
 			      \item Rosetta 2
-			      \item Valgrind
 			      \item Box64
+			      \item Valgrind
+			      \item ...
 		      \end{itemize}
 		\item Динамические бинарные трансляторы с поднятием в LLVM IR:
 		      \begin{itemize}
 			      \item Instrew + Rellume
-			      \item BinRec, HQEMU (не обновлялись с 2022 и 2018 года соответственно)
-			      \item DBILL, LnQ, Risotto (есть только статьи, либо код закрыт)
+			      \item BinRec, HQEMU
+			            \begin{itemize}
+				            \item Не обновлялись с 2022 и 2018 года соответственно
+			            \end{itemize}
+			      \item DBILL, LnQ, Risotto
+			            \begin{itemize}
+				            \item Есть только статьи, либо код закрыт
+			            \end{itemize}
 		      \end{itemize}
 		      %    \item Выводы:
 		      %          \begin{itemize}
@@ -116,9 +127,22 @@
 		      \begin{itemize}
 			      \item Instrew производительнее, чем QEMU и Valgrind (основываясь на бенчмарках\footnote{\href{https://mediatum.ub.tum.de/doc/1614897/1614897.pdf}{https://mediatum.ub.tum.de/doc/1614897/1614897.pdf}})
 			      \item Instrew "из коробки" имеет API для добавления инструментов бинарного анализа
+			      \item Является open-source проектом
 			      \item Из всех рассмотренных ДБТ с поднятием в LLVM IR Instrew + Rellume поддерживается мейнтейнером
 			      \item Instrew уже имеет guest-поддержку RISC-V
 		      \end{itemize}
+	\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+	\frametitle{Обзор}
+	В предыдущей работе было сделано:
+	\begin{itemize}
+		\item Выполнен обзор архитектуры Instrew
+		      % \item Реализованы процессорно-специфические патчи
+		      % \item Реализована эмуляция системных вызовов, PLT трамплины и минимальный набор ELF релокаций
+		      % \item Instrew был протестирован на статически слинкованных программах, с простым рантаймом
+		\item Реализована функциональность для запуска статически слинкованных программ с простым рантаймом
 	\end{itemize}
 \end{frame}
 
@@ -266,101 +290,134 @@
 	% \end{itemize}
 	\begin{itemize}
 		\item Является клиент-серверной
-		      % \item Работа была проведена над клиентом Instrew
+		\item Работа была проведена над
+		      \begin{itemize}
+			      \item "ELF Linker" в клиенте Instrew
+			      \item Rellume в сервере Instrew
+		      \end{itemize}
 	\end{itemize}
 	\begin{figure}
 		% \includegraphics[width=300pt]{pictures/instrew.drawio.png}
 		\centering
-		\includegraphics[width=250pt]{pictures/instrew-arch-disser.png}\footnote{диаграмма была взята \href{https://mediatum.ub.tum.de/doc/1614897/1614897.pdf}{\color{blue}{отсюда}}}
+		\includegraphics[width=250pt]{pictures/instrew-arch-disser.png}\footnote{\href{https://mediatum.ub.tum.de/doc/1614897/1614897.pdf}{https://mediatum.ub.tum.de/doc/1614897/1614897.pdf}}
 		% \caption{}
 	\end{figure}
 	% \vspace{-8pt}
 \end{frame}
 
-\begin{frame}[fragile]
-	\frametitle{Что было сделано}
-	Было сделано в предыдущей работе:
-	\begin{itemize}
-		\item Выполнен обзор архитектуры Instrew
-		\item Реализованы процессорно-специфические патчи
-		\item Реализована эмуляция системных вызовов, PLT трамплины и минимальный набор ELF релокаций
-		\item Instrew был протестирован на статически слинкованных программах, с простым рантаймом
-	\end{itemize}
-\end{frame}
 
 \begin{frame}[fragile]
-	\frametitle{Тестирование (1/2)}
+	\frametitle{Тестирование Instrew}
 	% \begin{itemize}
 	%   \item В реализации интересны архитектура, библиотеки, инструменты
 	%   \item Не надо добавлять на слайд примеры кода
 	% \end{itemize}
 	\begin{itemize}
-		\item Для выявления ошибок и улучшения поддержки RISC-V-хоста
-		\item Используем следующий подход:
-
+		\item Используем coreutils в качестве набора тестовых программ
 		      \begin{itemize}
 			      % \item статически и динамически слинкованные программы из coreutils под:
 			      %       \begin{itemize}
 			      %        \item x86\_64
 			      %        \item riscv64
 			      %       \end{itemize}
-			      \item Выбираем набор тестовых программ
-			      \item Компилируем статически и динамически
-			      \item В том числе компилируем под разные платформы
-			      \item Выявляем ошибки и исправляем их
+			      \item Необходимо, так как если Instrew не работает на coreutils, то не работает вообще
+			      \item Достаточно, так как <причина>
 		      \end{itemize}
+		\item Используем 4 вариации coreutils
+		      % \begin{itemize}
+		      %  \item Статически и динамически слинкованные
+		      %  \item Скомпилированные под x86\_64 и riscv64
+		      % \end{itemize}
 		\item В процессе тестирования было сделано:
 		      \begin{itemize}
-			      \item Добавлены новые релокации и обновлена PLT-таблица
-			      \item Сделан рефакторинг
+			      \item Добавлено N новых релокаций
+			      \item в PLT-таблицу добавлено M вхождений
+			      \item Добавлен latomic к зависимостям
 			            % \item Написаны скрипты для запуска динамически слинкованных программ
 		      \end{itemize}
-		\item Из трудностей можно выделить:
-		      \begin{itemize}
-			      \item Частично тестирование проводилось на плате Sipeed Lichee PI 4A, где был установлен специфический glibc, в следствие чего было потрачено время на поиск плохо задокументированных инструкций, которые Rellume не мог поднять в LLVM IR
-		      \end{itemize}
+		\item Результат
+		      \begin{center}
+
+			      \footnotesize
+			      \begin{tabular}{ |p{3cm}|p{3cm}|p{3cm}|}
+				      \hline
+				      Архитектура& Статический Coreutils &Динамический Сoreutils\\
+				      \hline
+				      rv64  & проходят K из P тестов &проходят L из P тестов\\
+				      x86\_64& проходят M из P тестов  & проходят N из P тестов \\
+				      \hline
+			      \end{tabular}
+		      \end{center}
+
 	\end{itemize}
 	% \vspace{-8pt}
 \end{frame}
 
 \begin{frame}[fragile]
-	\frametitle{Тестирование (2/2)}
+	\frametitle{Тестирование Instrew}
+	% Из трудностей можно выделить:
+	\begin{itemize}
+		\item Тестирование частично проводилось на плате Sipeed Lichee PI 4A
+		      \begin{itemize}
+			      \item Установлен glibc с нестандартными расширениями
+			      \item Rellume не мог поднять в LLVM IR инструкции из этого расширения
+		      \end{itemize}
+		\item Поиск документации для инструкций из этого расширения занял много времени
+		      \begin{itemize}
+			      \item Было принято решение проводить тестирование на виртуальной машине
+		      \end{itemize}
+	\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+	\frametitle{Тестирование Rellume}
 	% \begin{itemize}
 	%   \item В реализации интересны архитектура, библиотеки, инструменты
 	%   \item Не надо добавлять на слайд примеры кода
 	% \end{itemize}
 	\begin{itemize}
 		% \item В процессе тестирования оказалось, что в Rellume плохая поддержка RISC-V-хоста
-		\item Instrew использует Rellume в качестве git submodule
-		\item При запуске Instrew unit-тестов также запускаются unit-тесты Rellume
+		\item Некоторые тест-кейсы используют LLVM JIT, которые падают с SEGFAULT на RISC-V
 		      \begin{itemize}
-			      \item Некоторые тест-кейсы используют LLVM JIT, которые падают с SEGFAULT на RISC-V
+			      \item В следствие чего снижается покрытие тестами
 		      \end{itemize}
+		      % \item Для CI важно, чтобы все тесты проходили, хотим решить эту проблему
 		\item Хотим попробовать обновить версию LLVM до 21, что потенциально может решить проблему
 		      \begin{itemize}
 			      \item Кросс-компилируем LLVM trunk под RISC-V
-			      \item Делаем рефакторинг
+			      \item Делаем рефакторинг Rellume
 			            % \item Оказывается, что при обновлении дополнительно перестает работать MCAssembler, который также падает с SEGFAULT, тем самым уменьшая количество успешно пройденных тестов
 		      \end{itemize}
+		\item Результат
+		      \begin{itemize}
+			      \item Все также падают тесты в рантайме, но знаем номер нереализованной релокации
+			      \item Можно сделать патч в LLVM
+		      \end{itemize}
+
 	\end{itemize}
 	% \vspace{-8pt}
 \end{frame}
 
 \begin{frame}[fragile]
-	\frametitle{CI \& PR}
+	\frametitle{CI}
 	\begin{itemize}
 		\item Есть трудности в связи с отсутствием нативной поддержки RISC-V в GH Actions
 		\item Есть два варианта решения этой проблемы:
 		      \begin{itemize}
 			      \item C помощью self-hosted runner на RISC-V
-			      \item C помощью qemu-user и chroot
+			      \item C помощью эмуляции RISC-V
 		      \end{itemize}
 		\item Удалось опробовать оба решения, но был выбран второй подход, так как:
 		      \begin{itemize}
-			      \item Есть сложности с поддержкой self-hosted runner на RISC-V
-			      \item Удалось найти third-party action, с помощью которого не нужно настраивать qemu-user и chroot
+			      % \item Не удалось запустить runner на виртуальной машине
+			      \item Self-hosted runner неудобен для мейнтейнера
+			            % \item Удалось найти third-party action, с помощью которого не нужно настраивать qemu-user и chroot
+			      \item Actions runner использует .NET, который на данный момент плохо поддерживает RISC-V
+			            \begin{itemize}
+				            \item Не удалось запустить на виртуальной машине, только на платке
+			            \end{itemize}
 		      \end{itemize}
-		\item Также после добавления CI был сделан PR в основную ветку Instrew
+		      % \item Также после добавления CI был сделан PR в основную ветку Instrew
 	\end{itemize}
 	% \vspace{-8pt}
 \end{frame}
@@ -487,9 +544,11 @@
 	В результате работы были выполнены следующие задачи:
 	\vspace{8pt}
 	\begin{enumerate}
-		\item Instrew был протестирован на произвольных статически слинкованных программах
-		\item Исправлены некоторые ошибки, выявленные при тестировании
-		\item В CI добавлена поддержка сборки на RISC-V
+		% \item Instrew был протестирован на произвольных статически слинкованных программах
+		% \item Исправлены некоторые ошибки, выявленные при тестировании
+		\item Instrew был протестирован на 4-ёх вариациях coreutils
+		\item Добавлено N новых релокаций, M вхождений в PLT-таблицу; добавлен latomic к зависимостям
+		\item В CI добавлена поддержка сборки на RISC-V и сделан пулл-реквест в основную ветку Instrew
 
 		      % \item Выполнен обзор архитектуры Instrew
 		      % \item Реализованы процессорно-специфические патчи и проставлены константы.
