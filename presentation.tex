@@ -68,7 +68,7 @@
 		\item Важным классом которых являются динамические бинарные трансляторы (далее --- ДБТ)
 		      \begin{itemize}
 			      \item Используются для эмуляции "на лету"
-			      \item Например Rosetta 2
+			      \item Например QEMU-user, Rosetta 2, Box64, Valgrind
 		      \end{itemize}
 		\item В качестве промежуточного представления для ДБТ хорошо использовать LLVM IR
 		      \begin{itemize}
@@ -92,14 +92,14 @@
 \begin{frame}
 	\frametitle{Обзор}
 	\begin{itemize}
-		\item Динамические бинарные трансляторы:
-		      \begin{itemize}
-			      \item QEMU-user
-			      \item Rosetta 2
-			      \item Box64
-			      \item Valgrind
-			      \item ...
-		      \end{itemize}
+		% \item Динамические бинарные трансляторы:
+		%       \begin{itemize}
+		% 	      \item QEMU-user
+		% 	      \item Rosetta 2
+		% 	      \item Box64
+		% 	      \item Valgrind
+		% 	      \item ...
+		%       \end{itemize}
 		\item Динамические бинарные трансляторы с поднятием в LLVM IR:
 		      \begin{itemize}
 			      \item Instrew + Rellume
@@ -126,25 +126,25 @@
 		\item Выводы:
 		      \begin{itemize}
 			      \item Instrew производительнее, чем QEMU и Valgrind (основываясь на бенчмарках\footnote{\href{https://mediatum.ub.tum.de/doc/1614897/1614897.pdf}{https://mediatum.ub.tum.de/doc/1614897/1614897.pdf}})
-			      \item Instrew "из коробки" имеет API для добавления инструментов бинарного анализа
+			      \item Instrew имеет API для добавления инструментов бинарного анализа
 			      \item Является open-source проектом
-			      \item Из всех рассмотренных ДБТ с поднятием в LLVM IR Instrew + Rellume поддерживается мейнтейнером
+			      \item Из всех рассмотренных ДБТ с поднятием в LLVM IR, Instrew + Rellume единственный поддерживается мейнтейнером
 			      \item Instrew уже имеет guest-поддержку RISC-V
 		      \end{itemize}
 	\end{itemize}
 \end{frame}
 
-\begin{frame}[fragile]
-	\frametitle{Обзор}
-	В предыдущей работе было сделано:
-	\begin{itemize}
-		\item Выполнен обзор архитектуры Instrew
-		      % \item Реализованы процессорно-специфические патчи
-		      % \item Реализована эмуляция системных вызовов, PLT трамплины и минимальный набор ELF релокаций
-		      % \item Instrew был протестирован на статически слинкованных программах, с простым рантаймом
-		\item Реализована функциональность для запуска статически слинкованных программ с простым рантаймом
-	\end{itemize}
-\end{frame}
+% \begin{frame}[fragile]
+% 	\frametitle{Обзор}
+% 	В предыдущей работе было сделано:
+% 	\begin{itemize}
+% 		\item Выполнен обзор архитектуры Instrew
+% 		      % \item Реализованы процессорно-специфические патчи
+% 		      % \item Реализована эмуляция системных вызовов, PLT трамплины и минимальный набор ELF релокаций
+% 		      % \item Instrew был протестирован на статически слинкованных программах, с простым рантаймом
+% 		\item Реализована функциональность для запуска статически слинкованных программ с простым рантаймом
+% 	\end{itemize}
+% \end{frame}
 
 % \begin{frame}
 %   \frametitle{Существующие решения}
@@ -314,34 +314,28 @@
 	% \end{itemize}
 	\begin{itemize}
 		\item Используем coreutils в качестве набора тестовых программ
-		      \begin{itemize}
-			      % \item статически и динамически слинкованные программы из coreutils под:
-			      %       \begin{itemize}
-			      %        \item x86\_64
-			      %        \item riscv64
-			      %       \end{itemize}
-			      \item Необходимо, так как если Instrew не работает на coreutils, то не работает вообще
-			      \item Достаточно, так как <причина>
-		      \end{itemize}
-		\item Используем 4 вариации coreutils
+		      % \begin{itemize}
+		      %  \item статически и динамически слинкованные программы из coreutils под:
+		      %        %       \begin{itemize}
+		      %        %        \item x86\_64
+		      %        %        \item riscv64
+		      %        %       \end{itemize}
+		      %        % \item Необходимо, так как если Instrew не работает на coreutils, то не работает вообще
+		      %        % \item Достаточно, так как <причина>
+		      % \end{itemize}
+		      % \item Используем 4 вариации coreutils
 		      % \begin{itemize}
 		      %  \item Статически и динамически слинкованные
 		      %  \item Скомпилированные под x86\_64 и riscv64
 		      % \end{itemize}
-		\item В процессе тестирования было сделано:
-		      \begin{itemize}
-			      \item Добавлено N новых релокаций
-			      \item в PLT-таблицу добавлено M вхождений
-			      \item Добавлен latomic к зависимостям
-			            % \item Написаны скрипты для запуска динамически слинкованных программ
-		      \end{itemize}
+
 		\item Результат
 		      \begin{center}
 
 			      \footnotesize
 			      \begin{tabular}{ |p{3cm}|p{3cm}|p{3cm}|}
 				      \hline
-				      Архитектура& Статический Coreutils &Динамический Сoreutils\\
+				      Guest Архитектура& Статический Coreutils &Динамический Сoreutils\\
 				      \hline
 				      rv64  & проходят K из P тестов &проходят L из P тестов\\
 				      x86\_64& проходят M из P тестов  & проходят N из P тестов \\
@@ -354,10 +348,25 @@
 \end{frame}
 
 \begin{frame}[fragile]
-	\frametitle{Тестирование Instrew}
+	\frametitle{Исправленные ошибки в Instrew}
+	\begin{itemize}
+		\item В процессе тестирования были обнаружены ошибки:
+		      \begin{itemize}
+			      \item Отсутсвуют N релокаций
+			      \item Добавлено N новых релокаций
+			      \item в PLT-таблицу добавлено M вхождений
+			      \item Добавлен latomic к зависимостям
+			            % \item Написаны скрипты для запуска динамически слинкованных программ
+		      \end{itemize}
+	\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+	\frametitle{Проблемы Instrew}
 	% Из трудностей можно выделить:
 	\begin{itemize}
-		\item Тестирование частично проводилось на плате Sipeed Lichee PI 4A
+		\item Тестирование <частично> проводилось на плате Sipeed Lichee PI 4A
+		\item *Однако подобный тест-кейс на плате делать неудобно, потому что*
 		      \begin{itemize}
 			      \item Установлен glibc с нестандартными расширениями
 			      \item Rellume не мог поднять в LLVM IR инструкции из этого расширения
@@ -377,21 +386,22 @@
 	% \end{itemize}
 	\begin{itemize}
 		% \item В процессе тестирования оказалось, что в Rellume плохая поддержка RISC-V-хоста
-		\item Некоторые тест-кейсы используют LLVM JIT, которые падают с SEGFAULT на RISC-V
+		\item Некоторые внутренние тест-кейсы используют LLVM JIT, которые падают с SEGFAULT на RISC-V
 		      \begin{itemize}
 			      \item В следствие чего снижается покрытие тестами
 		      \end{itemize}
 		      % \item Для CI важно, чтобы все тесты проходили, хотим решить эту проблему
-		\item Хотим попробовать обновить версию LLVM до 21, что потенциально может решить проблему
-		      \begin{itemize}
-			      \item Кросс-компилируем LLVM trunk под RISC-V
-			      \item Делаем рефакторинг Rellume
-			            % \item Оказывается, что при обновлении дополнительно перестает работать MCAssembler, который также падает с SEGFAULT, тем самым уменьшая количество успешно пройденных тестов
-		      \end{itemize}
+		\item Попробовали обновить версию LLVM до 21, что потенциально может решить проблему
+		      % \begin{itemize}
+		      %  \item Кросс-компилируем LLVM trunk под RISC-V
+		      %  \item Делаем рефакторинг Rellume
+		      %        % \item Оказывается, что при обновлении дополнительно перестает работать MCAssembler, который также падает с SEGFAULT, тем самым уменьшая количество успешно пройденных тестов
+		      % \end{itemize}
 		\item Результат
 		      \begin{itemize}
-			      \item Все также падают тесты в рантайме, но знаем номер нереализованной релокации
-			      \item Можно сделать патч в LLVM
+			      \item Все также падают тесты в рантайме
+			      \item Но знаем номера недостающих релокаций
+			            % \item Можно сделать патч в LLVM
 		      \end{itemize}
 
 	\end{itemize}
@@ -405,7 +415,7 @@
 		\item Есть два варианта решения этой проблемы:
 		      \begin{itemize}
 			      \item C помощью self-hosted runner на RISC-V
-			      \item C помощью эмуляции RISC-V
+			      \item C помощью эмуляции RISC-V (например с помощью qemu-user)
 		      \end{itemize}
 		\item Удалось опробовать оба решения, но был выбран второй подход, так как:
 		      \begin{itemize}
@@ -414,7 +424,7 @@
 			            % \item Удалось найти third-party action, с помощью которого не нужно настраивать qemu-user и chroot
 			      \item Actions runner использует .NET, который на данный момент плохо поддерживает RISC-V
 			            \begin{itemize}
-				            \item Не удалось запустить на виртуальной машине, только на платке
+				            \item Не удалось запустить на виртуальной машине, только на плате
 			            \end{itemize}
 		      \end{itemize}
 		      % \item Также после добавления CI был сделан PR в основную ветку Instrew
